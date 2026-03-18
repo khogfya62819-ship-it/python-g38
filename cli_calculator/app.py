@@ -17,8 +17,8 @@ def get_number(prompt):
        except ValueError:
            print("Invalid input. Please enter a number.")
 
-number1 = float(input("Enter first number: "))
-number2 = float(input("Enter second number: "))
+#number1 = float(input("Enter first number: "))
+#number2 = float(input("Enter second number: "))
 
 def get_operation():
    """Gets valid operation from user with validation."""
