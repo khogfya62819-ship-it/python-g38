@@ -81,14 +81,48 @@ def main():
 # added_time = datetime.now().strftime("%Y-%m-%d")
 # print(f"Contact added at: {added_time}")
 
+def normalize(name: str):
+    return name.strip().lower()
+
+def get_field(field):
+    """Gets non-empty field from user."""
+    while True:
+        result = input(f"Enter {field}: ")
+        if result:
+            return normalize(result)
+        print(f"❌ {field.title()} cannot be empty. Please try again.")
+
+def get_optional_field(field):
+    """Gets optional field from user."""
+    result = input(f"Enter {field} (optional): ")
+    return normalize(result) or None
+
+def get_update_field(field, current, optional=False):
+    """Gets field for updating an existing contact."""
+    prompt = f"{field} [{current}]: "
+    value = input(prompt).strip()
+    if not value:
+        return current
+    if optional:
+        return value or None
+    return value
+
 def add_contact():
     """Add a new contact."""
-    name = input("Enter contact name: ").strip()
-    phone = input("Enter phone number: ").strip()
-    email = input("Enter email (optional): ").strip()
-    address = input("Enter address (optional): ").strip() or None
-    notes = input("Enter notes (optional): ").strip() or None
+    # name = input("Enter contact name: ").strip()
+    # phone = input("Enter phone number: ").strip()
+    # email = input("Enter email (optional): ").strip()
+    # address = input("Enter address (optional): ").strip() or None
+    # notes = input("Enter notes (optional): ").strip() or None
+    # added_time = datetime.now().strftime("%Y-%m-%d")
+
+    name = get_field("name")
+    phone = get_field("phone number")
+    email = get_field("email")
+    address = get_optional_field("address") 
+    notes = get_optional_field("notes")
     added_time = datetime.now().strftime("%Y-%m-%d")
+
 
     if name and phone:
         contacts.append([name, phone, email, address, notes, added_time])
@@ -105,26 +139,49 @@ def add_contact():
 #     else:
 #         print("📭 No contacts found.")
 
-def view_contacts():
-    """View all contacts."""
-    if not contacts:
-        print("📭 No contacts found.")
-        return
+# def view_contacts():
+#     """View all contacts."""
+#     if not contacts:
+#         print("📭 No contacts found.")
+#         return
     
+#     print("\n" + "="*80)
+#     print("📱 CONTACT LIST")
+#     print("="*80)
+#     print(f"{'No.':<3} {'Name':<20} {'Phone Number':<15} {'Email':<20} {'Added':<10}")
+#     print("-"*80)
+#     for idx, contact in enumerate(contacts, start=1):
+
+        # Contact structure: [name, phone, email, address, notes, added_time]
+        # name = contact[0]
+        # phone = contact[1]
+        # email = contact[2] if contact [2] else ""
+        # added_time = contact[5]
+        # print(f"{idx:<3} {name:<20} {phone:<15} {email:<20} {added_time:<10}")
+        # print("="*80)
+
+def data_table(contacts, title):
+
     print("\n" + "="*80)
-    print("📱 CONTACT LIST")
+    print(f"📱 {title.upper()}")
     print("="*80)
     print(f"{'No.':<3} {'Name':<20} {'Phone Number':<15} {'Email':<20} {'Added':<10}")
     print("-"*80)
-    for idx, contact in enumerate(contacts, start=1):
 
-        # Contact structure: [name, phone, email, address, notes, added_time]
+    for idx, contact in enumerate(contacts, start=1):
         name = contact[0]
         phone = contact[1]
         email = contact[2] if contact [2] else ""
         added_time = contact[5]
         print(f"{idx:<3} {name:<20} {phone:<15} {email:<20} {added_time:<10}")
         print("="*80)
+
+def view_contacts():
+    """View all contacts."""
+    if not contacts:
+        print("📭 No contacts found.")
+        return
+    data_table(contacts, "Contact List")
 
 # def search_contact():
 #     """Search for a contact by name."""
@@ -138,7 +195,7 @@ def view_contacts():
 #         print("🔍 No contacts found matching that name.")
 
 def search_contact(search_term):
-    """Search for a contact by name."""
+    """Search for a contact by name, phone number, or email."""
     results = []
     search_term = search_term.lower()
 
@@ -155,27 +212,61 @@ def search_contact(search_term):
     if not results:
         print("🔍 No contacts found matching that search term.")        
         return
-    print("\n" + "="*80)
-    print("🔍 SEARCH RESULTS")
-    print("="*80)
-    print(f"{'No.':<3} {'Name':<20} {'Phone Number':<15} {'Email':<20}")
-    print("-"*80)
-    for idx, contact in enumerate(results, start=1):
-        email = contact[2] if contact[2] else ""
-        print(f"{idx:<3} {contact[0]:<20} {contact[1]:<15} {email:<20}")
-        print("="*80)
+    
+    data_table(results, "SEARCH RESULTS")
+    # print("\n" + "="*80)
+    # print("📱 SEARCH RESULTS")
+    # print("="*80)
+    # print(f"{'No.':<3} {'Name':<20} {'Phone Number':<15} {'Email':<20}")
+    # print("-"*80)
+    # for idx, contact in enumerate(results, start=1):
+    #     email = contact[2] if contact[2] else ""
+    #     print(f"{idx:<3} {contact[0]:<20} {contact[1]:<15} {email:<20}")
+    #     print("="*80)
+
+# def edit_contact():
+#     """Edit an existing contact."""
+#     name = input("Enter the name of the contact to edit: ").strip()
+#     for idx, (contact_name, name, phone) in enumerate(contacts):
+#         if contact_name.lower() == name.lower():
+#             new_name = input(f"Enter new name [{contact_name}]: ").strip() or contact_name
+#             new_phone = input(f"Enter new phone number [{phone}]: ").strip() or phone
+#             contacts[idx] = [new_name or contact_name, new_phone or phone]
+#             print(f"Contact '{contact_name}' updated successfully.")
+#             return
+#     print("❌ Contact not found.")
 
 def edit_contact():
     """Edit an existing contact."""
-    name = input("Enter the name of the contact to edit: ").strip()
-    for idx, (contact_name, phone) in enumerate(contacts):
-        if contact_name.lower() == name.lower():
-            new_name = input(f"Enter new name (or press Enter to keep '{contact_name}'): ").strip()
-            new_phone = input(f"Enter new phone number (or press Enter to keep '{phone}'): ").strip()
-            contacts[idx] = [new_name or contact_name, new_phone or phone]
-            print(f"Contact '{contact_name}' updated successfully.")
+    
+    if not contacts:
+        print("📭 No contacts found.")
+        return
+    
+    try:
+        contact_id = int(input("\nEnter the ID of the contact to edit: "))
+        if contact_id < 1 or contact_id > len(contacts):
+            print("❌ Invalid contact ID.")
             return
-    print("❌ Contact not found.")
+    except ValueError:
+        print("❌ Please enter a valid number.")
+        return
+
+
+    # Index is ID - 1
+    idx = contact_id - 1
+    contact = contacts[idx]
+
+    print("Leave blank to keep current.")
+    contact[0] = get_update_field("Name", contact[0])
+    contact[1] = get_update_field("Phone Number", contact[1])
+    contact[2] = get_update_field("Email", contact[2])
+    contact[3] = get_update_field("Address", contact[3], optional=True)
+    contact[4] = get_update_field("Notes", contact[4], optional=True)
+    contact[5] = datetime.now().strftime("%Y-%m-%d")
+
+    print(f"✅ Contact '{contact[0]}' updated successfully.")
+
 
 # def delete_contact():
 #     """Delete a contact."""
