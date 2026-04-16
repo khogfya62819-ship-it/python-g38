@@ -1,9 +1,12 @@
 
 from datetime import datetime
+import pickle
+import sys
 
 contacts = {}
 
 keys = ["name", "phone", "email", "address", "notes", "added_time"]
+
 menu_items = (
     "Add Contact",
     "View All Contacts",
@@ -35,11 +38,10 @@ def get_update_field(field, current, optional=False):
     value = input(prompt).strip()
     if not value:
         return current
-    if optional:
-        return value or None
-    return value
+    normalized = normalize(value)
+    return normalized if normalized else None if optional else normalized
 
-def add_contact():
+def add_contact(contacts, db_name):
     """Add a new contact."""
     
     new_contact = {}  # Local dict!
@@ -53,8 +55,23 @@ def add_contact():
 
     if new_contact["name"] and new_contact["phone"]:
         contacts[len(contacts) + 1] = new_contact
+        save_contacts(contacts, db_name)
         print(f"✅ Contact '{new_contact['name']} added successfully")
 
+# db_name = None
+
+def save_contacts(contacts, db_name='db.pkl'):
+    """Save contacts to a file."""
+    with open(db_name, 'wb') as f:
+        pickle.dump(contacts, f)
+
+def load_contacts(db_name: str):
+    """Load contacts from a file."""
+    try:
+        with open(db_name, 'rb') as f:
+            return pickle.load(f)
+    except (FileNotFoundError, EOFError, pickle.UnpicklingError):
+        return {}
 
 def data_table(contacts_dict, title):
 
@@ -68,57 +85,41 @@ def data_table(contacts_dict, title):
         print(f"{idx:<3} {contact['name']:<20} {contact['phone']:<15}"
               f"{contact['email']:<20} {contact['added_time'][:10]:<10}")
         
-def view_contacts():
+def view_contacts(contacts):
     """View all contacts."""
     if not contacts:
         print("📭 No contacts found.")
         return
     data_table(contacts, "Contact List")
 
-def search_contact():
+def search_contact(contacts):
     """Search for a contact by name, phone, or email."""
     
-    search_results = {}
-    search_term = input("Enter name, phone number, or email to search: ").strip()
-    search_term = normalize(search_term)
-
-    for contact in contacts.values():
-        for key in contact.keys():
-            if key in ["name", "phone", "email"]:
-                if search_term in contact[key].lower():
-                    search_results[len(search_results)+1] = contact
-                    break
+    search_term = normalize(input("Enter name, phone number, or email to search: ").strip())
+    search_results = {
+        idx: contact 
+        for idx, contact in contacts.items() 
+        if any(search_term in normalize(contact[key]) for key in ["name", "phone", "email"])
+    }    
 
     if not search_results:
         print("🔍 No contacts found matching that search term.")
         return
-    
     data_table(search_results, 'SEARCH RESULTS')
 
-
-# def search_contact():
-#     """Search for a contact by name, phone, or email."""
-#     search_term = normalize(input("Enter name, phone, or email to search: "))
-#     search_results = {
-#         id: contact for id, contact in contacts.items()
-#         if any(search_term in normalize(contact[k]) for k in ["name", "phone", "email"])
-#     }
-#     if not search_results:
-#         print("🔍 No contacts found matching your search.")
-#         return
-#     data_table(search_results, 'SEARCH RESULTS')
-
-
 def display_menu():
-    """Display the main menu."""
+    """Display the menu options."""
 
-    print("\n=== Contact Manager Menu ===")
+    print("\n" + "="*60)
+    print("📱 Simple Contact Manager")
+    print("="*60)
+
     for idx, item in enumerate(menu_items, start=1):
         print(f"{idx}. {item}")
 
     return input(f"Enter your choice (1-{len(menu_items)}): ").strip()
 
-def edit_contact():
+def edit_contact(contacts, db_name):
     """Edit an existing contact."""
 
     id_str = input("Enter the contact ID to edit: ").strip()
@@ -140,8 +141,9 @@ def edit_contact():
             contact[key] = get_update_field(key, contact[key], optional=True)
 
     print(f"✅ Contact '{contact['name']}' updated successfully.")
+    save_contacts(contacts, db_name)
     
-def delete_contact():
+def delete_contact(contacts, db_name):
     """Delete a contact."""
     if not contacts:
         print("📭 No contacts found.")
@@ -155,39 +157,58 @@ def delete_contact():
         return
     
     name = contacts[int(id_str)]["name"]
+    valid_answers = ["y", "n", "yes", "no", "Y", "N", "YES", "NO", "Yes", "No"]
 
-    confirm = input(f"Are you sure you want to delete contact '{name}'? (y/n): ").strip().lower()
+    while (confirm := input(f"Are you sure you want to delete contact '{name}'? (y/n): ").strip().lower()) not in valid_answers:
+        print("Please answer one of {', '.join(valid_answers)}")
+
+    confirm = normalize(confirm)[0]
+
     if confirm == 'y':
         del contacts[int(id_str)]
+        save_contacts(contacts, db_name)
         print(f"🗑 Contact '{name}' deleted successfully.")
     else:
         print("Deletion cancelled.")
 
-def main():
-    """Main contact manager loop."""
+def menu(contacts, db_name):
+    """Main menu."""
 
     while True:
-        print("\n" + "="*60)
-        print("📱 Simple Contact Manager")
-        print("="*60)
 
         choice = display_menu()
 
         match choice:
             case '1':
-                add_contact()
+                add_contact(contacts, db_name)
             case '2':
-                view_contacts()
+                view_contacts(contacts)
             case '3':
-                search_contact()
+                search_contact(contacts)
             case '4':
-                edit_contact()
+                edit_contact(contacts, db_name)
             case '5':
-                delete_contact()
+                delete_contact(contacts, db_name)
             case '6':
                 print("👋 Thank you for using the Phone Book CLI. Goodbye!")
                 break
             case _:
                 print("❌ Invalid choice. Please enter a number between 1 and 6.")
             
+def main():
+    """Main contact manager loop."""
+
+    if (args_count := len(sys.argv)) < 2:
+        print(
+        f"""
+        One argument expected, got {args_count - 1}. 
+        You must specify the database name as an argument.
+        Usage: phonebook <database.pkl>
+        """)
+        raise SystemExit(2)
+    
+    db_name = sys.argv[1]
+    contacts = load_contacts(db_name)
+    menu(contacts, db_name)
+
 main()
