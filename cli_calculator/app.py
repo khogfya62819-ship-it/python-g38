@@ -6,6 +6,10 @@ b=3
 #def add(x,y)->int:
 #    return x+y
 
+def message():
+    print("Welcome to the CLI Calculator")
+
+message()
 
 def get_number(prompt):
    """Prompts user for number, handles invalid input with loop."""
@@ -70,21 +74,5 @@ def main():
    print("Thanks for using the calculator. Goodbye!")
 
 main()
-#if operation == "+"
-#   result = f"{number1} + {number2} = {number1} + {number2}"
-#elif operation == "-":
-#   result = f"{number1} - {number2} = {number1 - number2}"
-#elif operation == "*":
-#   result = f"{number1} * {number2} = {number1 * number2}"
-#elif operation == "/":
-#   if number2 == 0:
-#       result = number1 / number2
-#       result = f"{number1} {operation} {number2} = {result:.10g}\n"
-#    else:
-#       result = "Error: Cannot divide by zero."
-#else:
-#    result = "Invalid operation."
-
-#print(f"Result: {result}")
 
     
